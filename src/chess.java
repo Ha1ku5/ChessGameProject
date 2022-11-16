@@ -1,30 +1,142 @@
 import java.util.Arrays;
 import java.util.Scanner;
+import java.lang.*;
+import static java.lang.Character.toLowerCase;
 
+/*
+TODO:
+-verify that a player only moves their own piece, put in doMove method
+-verify that a player does not move a piece to a square that is occupied by their own piece, put in doMove method
+-
+ */
 public class chess {
     public static char[][] board = new char[8][8];
+    public static String avaLetters = "abcdefgh";
+    public static String avaNumbers = "12345678";
     public static void main(String[] args) {
         Scanner in = new Scanner(System.in);
         System.out.println("Type 'play' to begin a game, 'help' for help, or 'quit' to exit\n");
-        inputLoop();
-        play();
+        menu();
+
 
     }
+
         /*
         ask for move DONE
         translate text to numbers
         check if valid
         move location of piece
         */
-    public static void play(){
+    public static void doMove(String move){
+        String to = move.substring(3);
+        String from = move.substring(0,2);
+        int toX = avaLetters.indexOf(to.charAt(0));
+        int toY = avaNumbers.indexOf(to.charAt(1));
+        int fromX = avaLetters.indexOf(from.charAt(0));
+        int fromY = avaNumbers.indexOf(from.charAt(1));
+
+        char piece = board[fromY][fromX];
+        piece = toLowerCase(piece);
+        switch(piece){ //ASSUMES THEY ONLY TRY AND MOVE THEIR OWN PIECES - NEEDS TO BE FIXED
+            case 'P':
+                if(toY == fromY + 1 && toX == fromX){
+                    board[toY][toX] = piece;
+                    board[fromY][fromX] = ' ';
+                }
+                break;
+            case 'p':
+                if(toY == fromY - 1 && toX == fromX){
+                    board[toY][toX] = piece;
+                    board[fromY][fromX] = ' ';
+                }
 
 
 
+        }
 
+        System.out.println(toX + " " + toY + " " + fromX + " " + fromY);
 
 
     }
+    public static void play(){
+        Scanner in = new Scanner(System.in);
 
+        boolean run = true;
+        boolean wMove = true;
+        boolean bMove = true;
+        while(run) {
+
+            //white's move
+            while(wMove) {
+                System.out.print("White's move\n>");
+                String whiteMove = in.nextLine();
+                if (whiteMove.equalsIgnoreCase("forfeit") || whiteMove.equalsIgnoreCase("ff")) { //game over
+                    System.out.println("White forfeits, Black wins!");
+                    resetBoard();
+                    menu();
+                }
+                if (!validate(whiteMove)) {
+                    System.out.println("Invalid move! \n Try again");
+                    play();
+                } else {
+                    doMove(whiteMove);
+                    wMove = false;
+                }
+            }
+
+            //black's move
+            while(bMove) {
+                System.out.print("Black's move\n>");
+                String blackMove = in.nextLine();
+                if (blackMove.equalsIgnoreCase("forfeit") || blackMove.equalsIgnoreCase("ff")) { //game over
+                    System.out.println("Black forfeits, White wins!");
+                    resetBoard();
+                    menu();
+                }
+                if (!validate(blackMove)) {
+                    System.out.println("Invalid move! \n Try again");
+                    play();
+                } else {
+                    doMove(blackMove);
+                    bMove = false;
+                }
+            }
+
+
+
+        }
+    }
+
+
+
+    //makes sure that the input is in bounds
+    //possibly the ugliest method I've ever written
+    public static boolean validate(String checkMe){//concatenating string w char makes .contains() work on char
+        return (avaNumbers.contains(checkMe.charAt(1) + "")) && (avaNumbers.contains(checkMe.charAt(4) + "")) &&
+                ((avaLetters.contains(checkMe.charAt(0) + "")) && (avaLetters.contains(checkMe.charAt(3) + "")));
+    }
+
+    public static void menu(){
+        Scanner in = new Scanner(System.in);
+        System.out.print(">");
+        String input = in.nextLine();
+        switch (input){
+            case "help":
+                help();
+                break;
+            case "quit":
+                System.out.println("Goodbye!");
+                System.exit(0);
+                break;
+            case "play":
+                play();
+                break;
+            default:
+                System.out.println("Invalid argument, please try again.");
+                menu();
+        }
+    }
+    //looks garbage, will fix later
     public static void printBoard(){
         int[] label = {8,7,6,5,4,3,2,1};
         //prints out current board state
@@ -40,32 +152,14 @@ public class chess {
         }
 
     }
-    public static void inputLoop(){
-        Scanner in = new Scanner(System.in);
-        System.out.print(">");
-        String input = in.nextLine();
-        switch (input){
-            case "help":
-                help();
-                break;
-            case "quit":
-                System.out.println("Goodbye!");
-                System.exit(0);
-                break;
-            case "play":
-                break;
-            default:
-                System.out.println("Invalid argument, please try again.");
-                inputLoop();
-        }
-    }
     //help menu
     public static void help(){
         System.out.println("Type the coordinates of the piece you want to move");
         System.out.println("Then type the coordinates of where you want to move it");
         System.out.println("Example: 'a2 a4' moves the piece at a2 to a4");
         System.out.println("Lowercase pieces are white, uppercase are black");
-        inputLoop();
+        System.out.println("At any point if you wish to resign type 'forfeit' or 'ff'");
+        menu();
     }
 
     //sets board to default state
