@@ -1,3 +1,4 @@
+import java.sql.SQLOutput;
 import java.util.Arrays;
 import java.util.Scanner;
 import java.lang.*;
@@ -12,100 +13,413 @@ TODO:
 public class chess {
     public static char[][] board = new char[8][8];
     public static String avaLetters = "abcdefgh";
-    public static String avaNumbers = "12345678";
+    public static String avaNumbers = "87654321";
+
     public static void main(String[] args) {
         Scanner in = new Scanner(System.in);
         System.out.println("Type 'play' to begin a game, 'help' for help, or 'quit' to exit\n");
+        resetBoard();
         menu();
 
 
     }
+    public static void play() {
+        boolean run = true;
+        while (run) {
+            System.out.print("White's move\n>");
+            whiteTurn();
+            System.out.print("Black's move\n>");
+            blackTurn();
+        }
 
-        /*
-        ask for move DONE
-        translate text to numbers
-        check if valid
-        move location of piece
-        */
-    public static void doMove(String move){
+    }
+    public static void whiteTurn() {
+        Scanner in = new Scanner(System.in);
+
+        printBoard();
+        String move = in.nextLine();
+        if (move.equalsIgnoreCase("forfeit") || move.equalsIgnoreCase("ff")) { //game over
+            System.out.println("White forfeits, Black wins!");
+            resetBoard();
+            menu();
+        }
+        if (!validate(move)) {
+            System.out.println("Invalid move! \n Try again");
+            play();
+        } else {
+            doWhiteMove(move);
+        }
+    }
+
+    public static void blackTurn() {
+        Scanner in = new Scanner(System.in);
+        printBoard();
+        String move = in.nextLine();
+        if (move.equalsIgnoreCase("forfeit") || move.equalsIgnoreCase("ff")) { //game over
+            System.out.println("Black forfeits, White wins!");
+            resetBoard();
+            menu();
+        }
+        if (!validate(move)) {
+            System.out.println("Invalid move! \n Try again");
+        } else {
+            doBlackMove(move);
+        }
+    }
+    public static void doWhiteMove(String move) {
         String to = move.substring(3);
-        String from = move.substring(0,2);
+        String from = move.substring(0, 2);
         int toX = avaLetters.indexOf(to.charAt(0));
         int toY = avaNumbers.indexOf(to.charAt(1));
         int fromX = avaLetters.indexOf(from.charAt(0));
         int fromY = avaNumbers.indexOf(from.charAt(1));
-
         char piece = board[fromY][fromX];
-        piece = toLowerCase(piece);
-        switch(piece){ //ASSUMES THEY ONLY TRY AND MOVE THEIR OWN PIECES - NEEDS TO BE FIXED
-            case 'P':
-                if(toY == fromY + 1 && toX == fromX){
+        if (piece == ' ') {
+            System.out.println("No piece at " + from);
+            blackTurn();
+        }
+        if (Character.isUpperCase(piece)){
+            System.out.println("That is not your piece!");
+            whiteTurn();
+        }
+        if(Character.isLowerCase(board[toY][toX])){ // white tries to move onto their own piece
+            System.out.println("You cannot move a piece to a square that is occupied by your own piece");
+            whiteTurn();
+        }
+        switch (piece) {
+            case 'p': //pawn moves
+                if (isPathOccupied(fromX, fromY, toX, toY)) {
+                    System.out.println("Path is occupied");
+                } else {
+                    System.out.println("pawn");
+                    System.out.println("fromY: " + fromY + " toY: " + toY + " fromX: " + fromX + " toX: " + toX);
+                    if (toX == (fromX) && (toY == fromY - 1)) {
+                        board[toY][toX] = piece;
+                        board[fromY][fromX] = ' ';
+                        break;
+                    }
+                    if ((toY == fromY - 2) && (toX == fromX && fromY == 6)) {
+                        board[toY][toX] = piece;
+                        board[fromY][fromX] = ' ';
+                        break;
+                    }
+                    //attack moves
+                    if (((toY == fromY - 1) && (toX == fromX - 1 || toX == fromX + 1)) && board[toY][toX] != ' ') {
+                        board[toY][toX] = piece;
+                        board[fromY][fromX] = ' ';
+                        break;
+                    }
+                }
+                break;
+            case 'r': //rook moves
+                if (isPathOccupied(fromX, fromY, toX, toY)) {
+                    System.out.println("Path is occupied");
+                } else {
+                    System.out.println("rook");
+                    if (toY == fromY && toX != fromX) {
+                        board[toY][toX] = piece;
+                        board[fromY][fromX] = ' ';
+                    }
+                    if (toY != fromY && toX == fromX) {
+                        board[toY][toX] = piece;
+                        board[fromY][fromX] = ' ';
+                    }
+                }
+                break;
+            case 'n': //knight moves  WORKS
+                System.out.println("knight");
+                if (toY == fromY - 2 && toX == fromX + 1) {
+                    board[toY][toX] = piece;
+                    board[fromY][fromX] = ' ';
+                }
+                if (toY == fromY - 2 && toX == fromX - 1) {
+                    board[toY][toX] = piece;
+                    board[fromY][fromX] = ' ';
+                }
+                if (toY == fromY + 2 && toX == fromX + 1) {
+                    board[toY][toX] = piece;
+                    board[fromY][fromX] = ' ';
+                }
+                if (toY == fromY + 2 && toX == fromX - 1) {
+                    board[toY][toX] = piece;
+                    board[fromY][fromX] = ' ';
+                }
+                if (toY == fromY - 1 && toX == fromX + 2) {
+                    board[toY][toX] = piece;
+                    board[fromY][fromX] = ' ';
+                }
+                if (toY == fromY - 1 && toX == fromX - 2) {
+                    board[toY][toX] = piece;
+                    board[fromY][fromX] = ' ';
+                }
+                if (toY == fromY + 1 && toX == fromX + 2) {
+                    board[toY][toX] = piece;
+                    board[fromY][fromX] = ' ';
+                }
+                if (toY == fromY + 1 && toX == fromX - 2) {
                     board[toY][toX] = piece;
                     board[fromY][fromX] = ' ';
                 }
                 break;
-            case 'p':
-                if(toY == fromY - 1 && toX == fromX){
+
+            case 'b': //bishop moves  WORKS
+                System.out.println("bishop");
+                if (Math.abs(toY - fromY) == Math.abs(toX - fromX)) {
                     board[toY][toX] = piece;
                     board[fromY][fromX] = ' ';
                 }
-
-
+                break;
+            case 'k': //king moves  WORKS
+                if(isPathOccupied(fromX, fromY, toX, toY)) {
+                    System.out.println("Path is occupied");
+                }else {
+                    System.out.println("king");
+                    if (Math.abs(toY - fromY) <= 1 && Math.abs(toX - fromX) <= 1) {
+                        board[toY][toX] = piece;
+                        board[fromY][fromX] = ' ';
+                    }
+                }
+                break;
+                case 'q': //queen moves  WORKS
+                    if(isPathOccupied(fromX, fromY, toX, toY)) {
+                        System.out.println("Path is occupied");
+                    }else{
+                        System.out.println("queen to " + move.substring(3));
+                        if (Math.abs(toY - fromY) == Math.abs(toX - fromX)) {
+                            board[toY][toX] = piece;
+                            board[fromY][fromX] = ' ';
+                        }
+                        if (toY == fromY && toX != fromX) {
+                            board[toY][toX] = piece;
+                            board[fromY][fromX] = ' ';
+                        }
+                        if (toY != fromY && toX == fromX) {
+                            board[toY][toX] = piece;
+                            board[fromY][fromX] = ' ';
+                        }
+                        break;
+                    }
 
         }
 
-        System.out.println(toX + " " + toY + " " + fromX + " " + fromY);
+        //System.out.println(toX + " " + toY + " " + fromX + " " + fromY);
 
 
     }
-    public static void play(){
-        Scanner in = new Scanner(System.in);
 
-        boolean run = true;
-        boolean wMove = true;
-        boolean bMove = true;
-        while(run) {
 
-            //white's move
-            while(wMove) {
-                System.out.print("White's move\n>");
-                String whiteMove = in.nextLine();
-                if (whiteMove.equalsIgnoreCase("forfeit") || whiteMove.equalsIgnoreCase("ff")) { //game over
-                    System.out.println("White forfeits, Black wins!");
-                    resetBoard();
-                    menu();
-                }
-                if (!validate(whiteMove)) {
-                    System.out.println("Invalid move! \n Try again");
-                    play();
+    public static void doBlackMove(String move) {
+        String to = move.substring(3);
+        String from = move.substring(0, 2);
+        int toX = avaLetters.indexOf(to.charAt(0));
+        int toY = avaNumbers.indexOf(to.charAt(1));
+        int fromX = avaLetters.indexOf(from.charAt(0));
+        int fromY = avaNumbers.indexOf(from.charAt(1));
+        char piece = board[fromY][fromX];
+        if (piece == ' ') {
+            System.out.println("No piece at " + from);
+            blackTurn();
+        }
+        if (Character.isUpperCase(piece)){
+            System.out.println("That is not your piece!");
+            blackTurn();
+        }
+        if (Character.isUpperCase(board[toY][toX])) {
+            System.out.println("You cannot move a piece to a square that is occupied by your own piece");
+            blackTurn();
+        }
+        switch (piece) {
+            case 'P': //pawn moves NEEDS ATTACK MOVES
+                if (isPathOccupied(fromX, fromY, toX, toY)) {
+                    System.out.println("Path is occupied");
+                    blackTurn();
                 } else {
-                    doMove(whiteMove);
-                    wMove = false;
+                    System.out.println("pawn");
+                    System.out.println("fromY: " + fromY + " toY: " + toY + " fromX: " + fromX + " toX: " + toX);
+                    if (toX == (fromX) && (toY == fromY + 1)) {
+                        board[toY][toX] = piece;
+                        board[fromY][fromX] = ' ';
+                        break;
+                    }
+                    if ((toY == fromY + 2) && (toX == fromX && fromY == 6)) {
+                        board[toY][toX] = piece;
+                        board[fromY][fromX] = ' ';
+                        break;
+                    }
+                    //attack moves
+                    if (((toY == fromY + 1) && (toX == fromX + 1 || toX == fromX - 1)) && board[toY][toX] != ' ') {
+                        board[toY][toX] = piece;
+                        board[fromY][fromX] = ' ';
+                        break;
+                    }
                 }
-            }
-
-            //black's move
-            while(bMove) {
-                System.out.print("Black's move\n>");
-                String blackMove = in.nextLine();
-                if (blackMove.equalsIgnoreCase("forfeit") || blackMove.equalsIgnoreCase("ff")) { //game over
-                    System.out.println("Black forfeits, White wins!");
-                    resetBoard();
-                    menu();
-                }
-                if (!validate(blackMove)) {
-                    System.out.println("Invalid move! \n Try again");
-                    play();
+                break;
+            case 'R': //rook moves
+                if (isPathOccupied(fromX, fromY, toX, toY)) {
+                    System.out.println("Path is occupied");
+                    blackTurn();
                 } else {
-                    doMove(blackMove);
-                    bMove = false;
+                    System.out.println("rook");
+                    if (toY == fromY && toX != fromX) {
+                        board[toY][toX] = piece;
+                        board[fromY][fromX] = ' ';
+                    }
+                    if (toY != fromY && toX == fromX) {
+                        board[toY][toX] = piece;
+                        board[fromY][fromX] = ' ';
+                    }
                 }
-            }
+                break;
+            case 'N': //knight moves  WORKS
+                System.out.println("knight");
+                if (toY == fromY - 2 && toX == fromX + 1) {
+                    board[toY][toX] = piece;
+                    board[fromY][fromX] = ' ';
+                }
+                if (toY == fromY - 2 && toX == fromX - 1) {
+                    board[toY][toX] = piece;
+                    board[fromY][fromX] = ' ';
+                }
+                if (toY == fromY + 2 && toX == fromX + 1) {
+                    board[toY][toX] = piece;
+                    board[fromY][fromX] = ' ';
+                }
+                if (toY == fromY + 2 && toX == fromX - 1) {
+                    board[toY][toX] = piece;
+                    board[fromY][fromX] = ' ';
+                }
+                if (toY == fromY - 1 && toX == fromX + 2) {
+                    board[toY][toX] = piece;
+                    board[fromY][fromX] = ' ';
+                }
+                if (toY == fromY - 1 && toX == fromX - 2) {
+                    board[toY][toX] = piece;
+                    board[fromY][fromX] = ' ';
+                }
+                if (toY == fromY + 1 && toX == fromX + 2) {
+                    board[toY][toX] = piece;
+                    board[fromY][fromX] = ' ';
+                }
+                if (toY == fromY + 1 && toX == fromX - 2) {
+                    board[toY][toX] = piece;
+                    board[fromY][fromX] = ' ';
+                }
+                break;
 
-
-
+            case 'B': //bishop moves  WORKS
+                if (isPathOccupied(fromX, fromY, toX, toY)) {
+                    System.out.println("Path is occupied");
+                    blackTurn();
+                } else {
+                    System.out.println("bishop");
+                    if (Math.abs(toY - fromY) == Math.abs(toX - fromX)) {
+                        board[toY][toX] = piece;
+                        board[fromY][fromX] = ' ';
+                    }
+                }
+                break;
+            case 'K': //king moves  WORKS
+                if (isPathOccupied(fromX, fromY, toX, toY)) {
+                    System.out.println("Path is occupied");
+                    blackTurn();
+                } else {
+                    System.out.println("king");
+                    if (Math.abs(toY - fromY) <= 1 && Math.abs(toX - fromX) <= 1) {
+                        board[toY][toX] = piece;
+                        board[fromY][fromX] = ' ';
+                    }
+                }
+                break;
+            case 'Q': //queen moves  WORKS
+                if (isPathOccupied(fromX, fromY, toX, toY)) {
+                    System.out.println("Path is occupied");
+                    blackTurn();
+                } else {
+                    System.out.println("queen to " + move.substring(3));
+                    if (Math.abs(toY - fromY) == Math.abs(toX - fromX)) {
+                        board[toY][toX] = piece;
+                        board[fromY][fromX] = ' ';
+                    }
+                    if (toY == fromY && toX != fromX) {
+                        board[toY][toX] = piece;
+                        board[fromY][fromX] = ' ';
+                    }
+                    if (toY != fromY && toX == fromX) {
+                        board[toY][toX] = piece;
+                        board[fromY][fromX] = ' ';
+                    }
+                    break;
+                }
         }
     }
+    public static boolean isPathOccupied(int toX, int toY, int fromX, int fromY) {
+        //checks if path is occupied
+        if (toX == fromX) {
+            if (toY > fromY) {
+                for (int i = fromY + 1; i < toY; i++) {
+                    if (board[i][toX] != ' ') {
+                        return true;
+                    }
+                }
+            }
+            if (toY < fromY) {
+                for (int i = fromY - 1; i > toY; i--) {
+                    if (board[i][toX] != ' ') {
+                        return true;
+                    }
+                }
+            }
+        }
+        if (toY == fromY) {
+            if (toX > fromX) {
+                for (int i = fromX + 1; i < toX; i++) {
+                    if (board[toY][i] != ' ') {
+                        return true;
+                    }
+                }
+            }
+            if (toX < fromX) {
+                for (int i = fromX - 1; i > toX; i--) {
+                    if (board[toY][i] != ' ') {
+                        return true;
+                    }
+                }
+            }
+        }
+        if (Math.abs(toY - fromY) == Math.abs(toX - fromX)) {
+            if (toY > fromY && toX > fromX) {
+                for (int i = 1; i < Math.abs(toY - fromY); i++) {
+                    if (board[fromY + i][fromX + i] != ' ') {
+                        return true;
+                    }
+                }
+            }
+            if (toY > fromY && toX < fromX) {
+                for (int i = 1; i < Math.abs(toY - fromY); i++) {
+                    if (board[fromY + i][fromX - i] != ' ') {
+                        return true;
+                    }
+                }
+            }
+            if (toY < fromY && toX > fromX) {
+                for (int i = 1; i < Math.abs(toY - fromY); i++) {
+                    if (board[fromY - i][fromX + i] != ' ') {
+                        return true;
+                    }
+                }
+            }
+            if (toY < fromY && toX < fromX) {
+                for (int i = 1; i < Math.abs(toY - fromY); i++) {
+                    if (board[fromY - i][fromX - i] != ' ') {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
 
 
 
